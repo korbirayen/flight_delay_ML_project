@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Delay Prediction System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Flight Delay Prediction System</h1>
+            <p class="subtitle">Decision Tree Model</p>
+        </header>
+
+        <div class="card">
+            <form id="predictionForm">
+                <div class="form-grid">
+                    <!-- Day of Week -->
+                    <div class="form-group">
+                        <label for="dayOfWeek">Day of Week</label>
+                        <select id="dayOfWeek" name="dayOfWeek" required>
+                            <option value="">Select Day</option>
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                            <option value="7">Sunday</option>
+                        </select>
+                    </div>
+
+                    <!-- Month -->
+                    <div class="form-group">
+                        <label for="month">Month (2019 Data)</label>
+                        <select id="month" name="month" required>
+                            <option value="">Select Month</option>
+                            <option value="1">January 2019</option>
+                            <option value="2">February 2019</option>
+                            <option value="3">March 2019</option>
+                            <option value="4">April 2019</option>
+                            <option value="5">May 2019</option>
+                            <option value="6">June 2019</option>
+                            <option value="7">July 2019</option>
+                            <option value="8">August 2019</option>
+                            <option value="9">September 2019</option>
+                            <option value="10">October 2019</option>
+                            <option value="11">November 2019</option>
+                            <option value="12">December 2019</option>
+                        </select>
+                    </div>
+
+                    <!-- Day -->
+                    <div class="form-group">
+                        <label for="day">Day of Month</label>
+                        <input type="number" id="day" name="day" min="1" max="31" placeholder="1-31" required>
+                        <small>Based on 2019 data</small>
+                    </div>
+
+                    <!-- Departure Time -->
+                    <div class="form-group">
+                        <label for="departureTime">Departure Time</label>
+                        <input type="text" id="departureTime" name="departureTime" placeholder="HHMM (e.g., 1430)" maxlength="4" required>
+                        <small>24-hour format</small>
+                    </div>
+
+                    <!-- Scheduled Arrival Time -->
+                    <div class="form-group">
+                        <label for="arrivalTime">Scheduled Arrival</label>
+                        <input type="text" id="arrivalTime" name="arrivalTime" placeholder="HHMM (e.g., 1725)" maxlength="4" required>
+                        <small>24-hour format</small>
+                    </div>
+
+                    <!-- Airline -->
+                    <div class="form-group full-width">
+                        <label for="airline">Airline</label>
+                        <select id="airline" name="airline" required>
+                            <option value="">Select Airline</option>
+                            <option value="Southwest Airlines Co.">Southwest Airlines Co.</option>
+                            <option value="American Airlines Inc.">American Airlines Inc.</option>
+                            <option value="American Eagle Airlines Inc.">American Eagle Airlines Inc.</option>
+                            <option value="United Air Lines Inc.">United Air Lines Inc.</option>
+                            <option value="Skywest Airlines Inc.">Skywest Airlines Inc.</option>
+                            <option value="US Airways Inc.">US Airways Inc.</option>
+                            <option value="Delta Air Lines Inc.">Delta Air Lines Inc.</option>
+                            <option value="Atlantic Southeast Airlines">Atlantic Southeast Airlines</option>
+                            <option value="JetBlue Airways">JetBlue Airways</option>
+                            <option value="Alaska Airlines Inc.">Alaska Airlines Inc.</option>
+                        </select>
+                    </div>
+
+                    <!-- Origin Airport -->
+                    <div class="form-group">
+                        <label for="originAirport">Origin Airport</label>
+                        <select id="originAirport" name="originAirport" required>
+                            <option value="">Select Origin</option>
+                            <option value="ORD">ORD - Chicago O'Hare</option>
+                            <option value="DFW">DFW - Dallas/Fort Worth</option>
+                            <option value="ATL">ATL - Atlanta</option>
+                            <option value="DEN">DEN - Denver</option>
+                            <option value="LAX">LAX - Los Angeles</option>
+                            <option value="PHX">PHX - Phoenix</option>
+                            <option value="IAH">IAH - Houston</option>
+                            <option value="SFO">SFO - San Francisco</option>
+                            <option value="LAS">LAS - Las Vegas</option>
+                            <option value="DTW">DTW - Detroit</option>
+                            <option value="MSP">MSP - Minneapolis</option>
+                            <option value="MCO">MCO - Orlando</option>
+                            <option value="SEA">SEA - Seattle</option>
+                            <option value="EWR">EWR - Newark</option>
+                            <option value="CLT">CLT - Charlotte</option>
+                            <option value="BOS">BOS - Boston</option>
+                            <option value="BWI">BWI - Baltimore</option>
+                            <option value="SLC">SLC - Salt Lake City</option>
+                            <option value="MDW">MDW - Chicago Midway</option>
+                            <option value="PHL">PHL - Philadelphia</option>
+                        </select>
+                    </div>
+
+                    <!-- Destination Airport -->
+                    <div class="form-group">
+                        <label for="destAirport">Destination Airport</label>
+                        <select id="destAirport" name="destAirport" required>
+                            <option value="">Select Destination</option>
+                            <option value="ORD">ORD - Chicago O'Hare</option>
+                            <option value="DFW">DFW - Dallas/Fort Worth</option>
+                            <option value="ATL">ATL - Atlanta</option>
+                            <option value="DEN">DEN - Denver</option>
+                            <option value="LAX">LAX - Los Angeles</option>
+                            <option value="PHX">PHX - Phoenix</option>
+                            <option value="IAH">IAH - Houston</option>
+                            <option value="SFO">SFO - San Francisco</option>
+                            <option value="LAS">LAS - Las Vegas</option>
+                            <option value="DTW">DTW - Detroit</option>
+                            <option value="MSP">MSP - Minneapolis</option>
+                            <option value="MCO">MCO - Orlando</option>
+                            <option value="SEA">SEA - Seattle</option>
+                            <option value="EWR">EWR - Newark</option>
+                            <option value="CLT">CLT - Charlotte</option>
+                            <option value="BOS">BOS - Boston</option>
+                            <option value="BWI">BWI - Baltimore</option>
+                            <option value="SLC">SLC - Salt Lake City</option>
+                            <option value="MDW">MDW - Chicago Midway</option>
+                            <option value="PHL">PHL - Philadelphia</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Predict Flight Status</button>
+                    <button type="button" class="btn btn-secondary" id="resetBtn">Reset Form</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="resultCard" class="result-card hidden">
+            <div id="resultContent" class="result-content"></div>
+        </div>
+
+        
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
