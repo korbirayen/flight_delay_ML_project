@@ -1,0 +1,441 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\geometry{margin=2cm}
+
+% Couleurs modernes
+\definecolor{primaryblue}{RGB}{66, 133, 244}
+\definecolor{darkblue}{RGB}{23, 78, 166}
+\definecolor{lightgray}{RGB}{245, 245, 245}
+\definecolor{codegreen}{RGB}{0, 128, 0}
+\definecolor{codepurple}{RGB}{156, 39, 176}
+\definecolor{codeorange}{RGB}{255, 87, 34}
+
+% Police moderne (Roboto-like)
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Style des sections
+\titleformat{\section}
+  {\color{primaryblue}\Large\bfseries}
+  {\thesection}{1em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\color{darkblue}\large\bfseries}
+  {\thesubsection}{1em}{}
+
+% Configuration code Python
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codepurple}\bfseries,
+    commentstyle=\color{codegreen}\itshape,
+    stringstyle=\color{codeorange},
+    showstringspaces=false,
+    breaklines=true,
+    frame=leftline,
+    framesep=5pt,
+    framerule=2pt,
+    rulecolor=\color{primaryblue},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    backgroundcolor=\color{lightgray},
+    xleftmargin=15pt
+}
+
+% Box coloree
+\newtcolorbox{infobox}{
+    colback=lightgray,
+    colframe=primaryblue,
+    fonttitle=\bfseries,
+    coltitle=white,
+    arc=3mm
+}
+
+\title{\textbf{\huge Prediction des Retards de Vols}\\ 
+       \Large Intelligence Artificielle - Decision Tree}
+\author{Projet Machine Learning 2025}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{\color{primaryblue}Plan}
+\begin{enumerate}[label=\textbf{\arabic*.}]
+    \item Introduction au projet
+    \item Dataset et choix des donnees
+    \item Developpement et code du modele
+    \item Dashboard de demonstration
+    \item Resultats et conclusion
+\end{enumerate}
+
+\vspace{1cm}
+\hrule
+\newpage
+
+\section{Introduction}
+
+Le but de ce projet est simple : predire si un vol va etre en retard ou pas. On utilise le machine learning, plus precisement un algorithme d'arbre de decision (Decision Tree). 
+
+L'idee c'est de creer un modele qui peut analyser des infos comme la compagnie aerienne, les aeroports de depart et d'arrivee, l'heure du vol, etc., et nous dire si on risque d'attendre a l'aeroport ou pas.
+
+\section{Le Dataset}
+
+\subsection{D'ou viennent les donnees ?}
+
+J'ai pris le dataset sur Kaggle : \textit{Flight Delay and Causes Dataset}. 
+
+\begin{infobox}
+\textbf{Lien du dataset :} \\
+\url{https://www.kaggle.com/datasets/undersc0re/flight-delay-and-causes}
+\end{infobox}
+
+\subsection{C'est quoi exactement ce dataset ?}
+
+Le dataset contient 484,551 vols qui ont eu lieu en 2019. Pour chaque vol, on a ces infos :
+
+\begin{itemize}
+    \item \textbf{DayOfWeek} : Jour de la semaine (1 = Lundi, 7 = Dimanche)
+    \item \textbf{Date} : Date du vol
+    \item \textbf{DepTime} : Heure de depart reelle
+    \item \textbf{ArrTime} : Heure d'arrivee reelle
+    \item \textbf{CRSArrTime} : Heure d'arrivee prevue
+    \item \textbf{Airline} : Compagnie aerienne (12 compagnies differentes)
+    \item \textbf{Origin} : Aeroport de depart (274 aeroports)
+    \item \textbf{Dest} : Aeroport de destination (274 aeroports)
+    \item \textbf{CarrierDelay} : Retard du a la compagnie aerienne
+    \item \textbf{WeatherDelay} : Retard du a la meteorologie
+    \item \textbf{NASDelay} : Retard du au systeme aerien national
+    \item \textbf{SecurityDelay} : Retard du a la securite
+    \item \textbf{LateAircraftDelay} : Retard du a un avion en retard
+\end{itemize}
+
+\subsection{Pourquoi j'ai choisi ce dataset ?}
+
+Plusieurs raisons m'ont pousse a choisir ce dataset :
+
+\begin{itemize}[leftmargin=*, itemsep=8pt]
+    \item \textbf{\color{primaryblue}Grosse quantite de data} : Presque 500,000 vols, c'est largement suffisant pour entrainer un bon modele.
+    
+    \item \textbf{\color{primaryblue}Donnees reelles} : Ce sont de vrais vols de 2019, pas des donnees synthetiques ou fictives.
+    
+    \item \textbf{\color{primaryblue}Variete des variables} : On a des trucs categoriques (compagnies, aeroports) et numeriques (horaires, retards), donc c'est interessant pour tester differentes techniques.
+    
+    \item \textbf{\color{primaryblue}Details sur les retards} : Y'a 5 types de retards differents (compagnie, meteo, securite...), ca permet de bien comprendre les causes.
+    
+    \item \textbf{\color{primaryblue}Probleme concret} : Predire les retards de vols, c'est utile dans la vraie vie, autant pour les compagnies que pour les passagers.
+\end{itemize}
+
+\subsection{Repartition des donnees}
+
+Voici ce que j'ai trouve en analysant le dataset :
+
+\begin{infobox}
+\textbf{Stats du dataset :}
+\begin{itemize}
+    \item \textbf{Total :} 484,551 vols
+    \item \textbf{Vols en retard (>30 min) :} 316,994 vols (65.42\%)
+    \item \textbf{Vols a l'heure :} 167,557 vols (34.58\%)
+\end{itemize}
+\end{infobox}
+
+Donc en gros, les 2/3 des vols sont en retard. C'est pas mal de retards quand meme, ce qui rend la prediction encore plus interessante.
+
+\newpage
+
+\section{Code et Developpement}
+
+Dans cette partie, je vais expliquer tout le code du notebook \texttt{Flight\_Delay\_Prediction.ipynb}, cellule par cellule.
+
+\subsection{Step 1 : Import des librairies}
+
+\begin{lstlisting}
+import numpy as np
+import pandas as pd
+\end{lstlisting}
+
+Ici j'importe NumPy et Pandas. NumPy c'est pour les calculs numeriques rapides, et Pandas pour manipuler les donnees sous forme de tableaux (DataFrames).
+
+\subsection{Step 2 : Chargement du CSV}
+
+\begin{lstlisting}
+df = pd.read_csv('Flight_delay.csv')
+df.head()
+\end{lstlisting}
+
+Je charge le fichier CSV dans un DataFrame. Le \texttt{head()} affiche les premieres lignes pour voir si tout est bien charge.
+
+\subsection{Step 3 : Explorer les donnees}
+
+\begin{lstlisting}
+df.info()
+\end{lstlisting}
+
+\texttt{info()} me montre le nombre de lignes, les colonnes, leurs types, et s'il y a des valeurs manquantes. C'est comme un resume du dataset.
+
+\subsection{Step 4 : Garder que les colonnes utiles}
+
+\begin{lstlisting}
+df = df[['DayOfWeek','Date','DepTime','ArrTime','CRSArrTime',
+         'Airline','Origin','Dest','CarrierDelay','WeatherDelay',
+         'NASDelay','SecurityDelay','LateAircraftDelay']]
+\end{lstlisting}
+
+Je garde que les colonnes qui nous interessent. Le reste c'est inutile pour notre modele.
+
+\subsection{Step 5 : Creer notre variable cible}
+
+\begin{lstlisting}
+delay_cols = [
+    "CarrierDelay",
+    "WeatherDelay",
+    "NASDelay",
+    "SecurityDelay",
+    "LateAircraftDelay"
+]
+df["Delay"] = (df[delay_cols].sum(axis=1) > 30).astype(int)
+df = df.drop(columns=delay_cols)
+\end{lstlisting}
+
+La je cree la variable qu'on va predire : \texttt{Delay}. J'additionne tous les types de retards, et si ca depasse 30 minutes, le vol est en retard (1), sinon il est a l'heure (0). Apres ca je supprime les colonnes de retards individuels parce que j'en ai plus besoin.
+
+\subsection{Step 6 : Check les valeurs manquantes}
+
+\begin{lstlisting}
+df.isnull().sum()
+\end{lstlisting}
+
+Ca compte combien de valeurs manquantes y'a dans chaque colonne. Histoire de savoir si on a des trous dans les donnees.
+
+\subsection{Step 7 : Traiter les dates}
+
+\begin{lstlisting}
+df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
+df['month'] = df['Date'].dt.month
+df['day'] = df['Date'].dt.day
+df = df.drop(columns=['Date'])
+\end{lstlisting}
+
+Je convertis la date en format datetime, puis j'extrais le mois et le jour dans des colonnes separees. Apres je supprime la colonne Date originale parce que le modele peut pas utiliser des dates comme ca directement. En separant mois et jour, le modele peut mieux detecter les patterns.
+
+\subsection{Step 8 : Identifier les variables categoriques}
+
+\begin{lstlisting}
+categorical_features = df.select_dtypes(include=['object']).columns
+\end{lstlisting}
+
+Je recupere toutes les colonnes qui sont du texte (type \texttt{object}). C'est surtout les compagnies aeriennes et les aeroports.
+
+\subsection{Step 9 : Analyser les categories}
+
+\begin{lstlisting}
+for col in categorical_features:
+    print(f"\nColumn: {col}")
+    print(df[col].value_counts())
+\end{lstlisting}
+
+Pour chaque variable categorique, j'affiche combien de fois chaque valeur apparait. Ca me montre quelles compagnies et quels aeroports sont les plus frequents.
+
+\subsection{Step 10 : One-Hot Encoding}
+
+\begin{lstlisting}
+df_encoded = pd.get_dummies(df, dtype=int)
+\end{lstlisting}
+
+\textbf{\color{primaryblue}C'est une etape importante !} Le one-hot encoding transforme les textes en nombres binaires (0 ou 1). Par exemple, si j'ai 12 compagnies, ca va creer 12 colonnes avec des 0 et des 1. C'est obligatoire parce que les algos de ML comprennent que les chiffres.
+
+\textit{Resultat : On passe de 8 colonnes a 566 colonnes !}
+
+\subsection{Step 11 : Normaliser les donnees}
+
+\begin{lstlisting}
+from sklearn.preprocessing import MinMaxScaler
+numerical_features = df_encoded.select_dtypes(
+    include=['int64', 'float64']).columns
+scaler = MinMaxScaler()
+df_encoded[numerical_features] = scaler.fit_transform(
+    df_encoded[numerical_features])
+\end{lstlisting}
+
+La normalisation MinMax ramene toutes les valeurs entre 0 et 1. Bon, pour les arbres de decision c'est pas ultra necessaire, mais c'est une bonne pratique quand meme. Ca evite qu'une variable avec de grosses valeurs ecrase les autres.
+
+\subsection{Step 12 : Import des outils ML}
+
+\begin{lstlisting}
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+\end{lstlisting}
+
+J'importe les outils scikit-learn :
+\begin{itemize}
+    \item \texttt{train\_test\_split} : pour diviser les donnees
+    \item \texttt{DecisionTreeClassifier} : notre algorithme d'arbre de decision
+    \item \texttt{accuracy\_score} : pour calculer la precision
+\end{itemize}
+
+\subsection{Step 13 : Separer X et y}
+
+\begin{lstlisting}
+X = df_encoded.drop(columns=['Delay'])
+y = df_encoded['Delay']
+\end{lstlisting}
+
+Je separe les features (X) de la cible (y). X contient toutes les caracteristiques du vol, et y contient ce qu'on veut predire (retard ou pas).
+
+\subsection{Step 14 : Split train/test}
+
+\begin{lstlisting}
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=0)
+\end{lstlisting}
+
+Je divise les donnees : 70\% pour entrainer le modele, 30\% pour le tester. Ca fait 339,185 vols pour l'entrainement et 145,366 pour le test.
+
+\subsection{Step 15 : Verifier les dimensions}
+
+\begin{lstlisting}
+print("X=", X_train.shape, X_test.shape)
+print("y=", y_train.shape, y_test.shape)
+\end{lstlisting}
+
+Je verifie que tout s'est bien passe et j'affiche les tailles des ensembles.
+
+\subsection{Step 16 : Creer le modele}
+
+\begin{lstlisting}
+clf = DecisionTreeClassifier(random_state=1)
+\end{lstlisting}
+
+Je cree mon classifieur Decision Tree. Le \texttt{random\_state=1} fait que j'aurai toujours le meme resultat si je relance le code.
+
+\subsection{Step 17 : Entrainer le modele}
+
+\begin{lstlisting}
+clf.fit(X_train, y_train)
+\end{lstlisting}
+
+\textbf{\color{primaryblue}C'est la que la magie opere !} Le modele apprend sur les donnees d'entrainement. Il construit son arbre de decision en trouvant les meilleures questions a poser pour separer vols en retard et vols a l'heure.
+
+\subsection{Step 18 : Tester et evaluer}
+
+\begin{lstlisting}
+y_pred = clf.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy}')
+\end{lstlisting}
+
+Le modele fait des predictions sur les donnees de test, et je calcule sa precision. Resultat : \textbf{89.50\%} de precision, soit 9 predictions correctes sur 10. Pas mal !
+
+\subsection{Step 19 : Sauvegarder le modele}
+
+\begin{lstlisting}
+import pickle
+
+with open('flight_delay_model.pkl', 'wb') as f:
+    pickle.dump(clf, f)
+
+with open('scaler.pkl', 'wb') as f:
+    pickle.dump(scaler, f)
+
+with open('feature_columns.pkl', 'wb') as f:
+    pickle.dump(X.columns.tolist(), f)
+\end{lstlisting}
+
+Je sauvegarde le modele et tous les trucs necessaires dans des fichiers .pkl. Comme ca je peux reutiliser le modele plus tard sans avoir a le reentrainer a chaque fois.
+
+\subsection{Bonus : Test avec Naive Bayes}
+
+\begin{lstlisting}
+from sklearn.naive_bayes import GaussianNB
+
+gnb = GaussianNB()
+gnb.fit(X_train, y_train)
+y_pred = gnb.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy}')
+\end{lstlisting}
+
+J'ai aussi teste Naive Bayes pour comparer, mais Decision Tree marchait mieux donc c'est celui que j'ai garde pour le dashboard.
+
+\newpage
+
+\section{Le Dashboard Web}
+
+\subsection{Comment ca marche ?}
+
+J'ai fait une petite interface web pour tester le modele en live. L'archi c'est simple :
+
+\begin{enumerate}
+    \item \textbf{\color{primaryblue}Backend Flask} : Un serveur Python qui charge le modele et fait les predictions
+    \item \textbf{\color{primaryblue}Frontend HTML/CSS/JS} : L'interface ou on entre les infos du vol
+    \item \textbf{\color{primaryblue}Modele ML} : Notre Decision Tree qui fait la prediction
+\end{enumerate}
+
+\subsection{Ce qu'on peut faire}
+
+L'interface c'est un formulaire simple ou on entre :
+
+\begin{itemize}[leftmargin=*]
+    \item Jour de la semaine (Lundi a Dimanche)
+    \item Date (limite a 2019 vu que c'est notre dataset)
+    \item Heure de depart et arrivee (format HHMM genre 1430)
+    \item Compagnie aerienne (10 compagnies principales)
+    \item Aeroports depart/arrivee (top 20)
+\end{itemize}
+
+Quand on clique sur "Predire", ca :
+\begin{enumerate}
+    \item Envoie les donnees au serveur Flask
+    \item Encode tout pareil que pendant l'entrainement
+    \item Lance la prediction avec notre Decision Tree
+    \item Affiche le resultat : "En retard" ou "A l'heure" + les probas
+\end{enumerate}
+
+\subsection{Stack technique}
+
+\begin{infobox}
+\textbf{Technologies :}
+\begin{itemize}
+    \item Backend : Python + Flask + scikit-learn
+    \item Frontend : HTML5, CSS3, JavaScript vanilla
+    \item API : REST avec JSON
+\end{itemize}
+\end{infobox}
+
+Le dashboard c'est surtout pour montrer que le modele marche bien et qu'on peut l'utiliser en pratique. C'est pas le focus principal du projet mais c'est cool pour visualiser.
+
+\section{Conclusion}
+
+\begin{infobox}
+\textbf{Resultats obtenus :}
+\begin{itemize}
+    \item Precision du modele : \textbf{89.50\%}
+    \item Dataset : 484,551 vols de 2019
+    \item Algorithme : Decision Tree
+    \item Interface web fonctionnelle
+\end{itemize}
+\end{infobox}
+
+Ce projet m'a permis de creer un systeme complet de prediction de retards de vols. J'ai fait tout le preprocessing (one-hot encoding, normalisation), entraine le modele sur un gros dataset, et cree une interface web pour tester.
+
+Les resultats sont plutot bons : 89.50\% de precision, ca veut dire que le modele se trompe rarement. Le Decision Tree est vraiment adapte pour ce genre de probleme avec des donnees mixtes (texte et chiffres).
+
+L'interface web prouve que le modele peut etre utilise en vrai, pas juste dans un notebook. On peut entrer les infos d'un vol et avoir la prediction direct.
+
+\vspace{1cm}
+
+\textbf{\color{primaryblue}En bref :} Un bon projet de ML qui marche, avec un modele qui predit correctement et une interface sympa pour le tester.
+
+\end{document}
